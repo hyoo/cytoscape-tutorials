@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function(){
 		]
 	});
 
-	var concentricLayout = cy.makeLayout({
+	var concentricLayout = {
 		name: 'concentric',
 		concentric: function(node){
 			return 10 - node.data('level');
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function(){
 			return 1;
 		},
 		animate: false
-	});
+	};
 
 	function addToGraph(targetUser, followers, level){
 
@@ -68,8 +68,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
 	var concentricButton = document.getElementById('concentricButton');
 	concentricButton.addEventListener('click', function(){
-		// console.log("concentric clicked");
-		concentricLayout.run();
+		cy.layout(concentricLayout);
 	});
 
 	var submitButton = document.getElementById('submitButton');
@@ -146,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function(){
 					console.log('Could not get data. Error message: ', err);
 				});
 		}else{
-			options.layout.run();
+			cy.layout(options.layout);
 		}
 	}
 });
