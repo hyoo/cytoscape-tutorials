@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function(){
 		}
 
 		var targetId = targetUser.id_str;
-		cy.batch(function() {
+		cy.batch(function(){
 			followers.forEach(function(twitterFollower){
 				if(cy.getElementById(twitterFollower.id_str).empty()){
 					cy.add(twitterUserObjToCyEle(twitterFollower, level + 1));
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function(){
 	}
 
 	var concentricButton = document.getElementById('concentricButton');
-	concentricButton.addEventListener('click', function() {
+	concentricButton.addEventListener('click', function(){
 		// console.log("concentric clicked");
 		concentricLayout.run();
 	});
@@ -86,14 +86,14 @@ document.addEventListener('DOMContentLoaded', function(){
 			.then(function(then){
 				addToGraph(then.user, then.followers, 0);
 
-				try {
+				try{
 					var options = {
 						maxLevel: 4,
-						userPerLevel: 3,
+						usersPerLevel: 3,
 						layout: concentricLayout
 					};
 					addFollowersByLevel(1, options);
-				} catch (error){
+				}catch(error){
 					console.log(error);
 				}
 			})
@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function(){
 		}
 
 		function topFollowerPromises(sortedFollowers){
-			return sortedFollowers.slice(-options.userPerLevel)
+			return sortedFollowers.slice(-options.usersPerLevel)
 				.map(function(follower){
 					var followerName = follower.data('username');
 					return getUser(followerName);
@@ -123,7 +123,6 @@ document.addEventListener('DOMContentLoaded', function(){
 				.filter('[level = ' + level + ']')
 				.sort(followerCompare);
 
-			// console.warn(topFollowers);
 			var followerPromises = topFollowerPromises(topFollowers);
 			Promise.all(followerPromises)
 				.then(function(userAndFollowerData){
@@ -137,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function(){
 							if(error.status === 429){
 								quit = true;
 							}
-						} else {
+						}else{
 							addToGraph(twitterData.user, twitterData.followers, level);
 						}
 					}
@@ -145,10 +144,9 @@ document.addEventListener('DOMContentLoaded', function(){
 				})
 				.catch(function(err){
 					console.log('Could not get data. Error message: ', err);
-				})
-		} else {
+				});
+		}else{
 			options.layout.run();
-			// console.log("running layout");
 		}
 	}
 });
@@ -160,18 +158,18 @@ function getUser(targetUser){
 		dataType: 'json'
 	});
 
-	var followerPromise = $.ajax({
+	var followersPromise = $.ajax({
 		url: 'http://blog.js.cytoscape.org/public/demos/twitter-graph/cache/' + targetUser + '-followers.json',
 		type: 'GET',
 		dataType: 'json'
 	});
 
-	return Promise.all([userPromise, followerPromise])
+	return Promise.all([userPromise, followersPromise])
 		.then(function(then){
 			return {
 				user: then[0],
 				followers: then[1]
-			}
+			};
 		});
 }
 
@@ -191,7 +189,7 @@ function twitterUserObjToCyEle(user, level){
 		},
 		position: {
 			x: -1000000,
-			y: 1000000
+			y: -1000000
 		}
-	}
+	};
 }
