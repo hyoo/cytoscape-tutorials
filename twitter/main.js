@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function(){
 			}
 		]
 	});
+	cy.panzoom({});
 
 	var concentricLayout = {
 		name: 'concentric',
