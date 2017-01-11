@@ -5,6 +5,7 @@
   "main": "index.html",
   "dependencies": {
     "cytoscape": "^2.7.13",
+    "cytoscape-cxtmenu": "^2.9.2",
     "cytoscape-dagre": "^1.3.0",
     "cytoscape-qtip": "^2.5.1",
     "dagre": "^0.7.4",
