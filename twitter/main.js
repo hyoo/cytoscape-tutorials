@@ -42,6 +42,10 @@ document.addEventListener('DOMContentLoaded', function(){
 		animate: false
 	};
 
+	var dagreLayout = {
+		name: 'dagre'
+	};
+
 	function addToGraph(targetUser, followers, level){
 
 		if(cy.getElementById(targetUser.id_str).empty()){
