@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
 	var submitButton = document.getElementById('submitButton');
 	submitButton.addEventListener('click', function(){
-		taxonID = document.getElementById('taxonID').value || 196627;
+		taxonID = document.getElementById('taxonID').value || 246196; // 196627, 246196
 
 		getData(taxonID)
 			.then(function(d){
@@ -134,6 +134,47 @@ document.addEventListener('DOMContentLoaded', function(){
 	var actionDownloadButton = document.getElementById('download_data');
 	actionDownloadButton.addEventListener('click', function(){
 		console.log(raw_data.data);
+	});
+
+	var actionSelectSubGraph = document.getElementById('selectSubGraph');
+	actionSelectSubGraph.addEventListener('click', function(){
+		var nodeCriteria = 5;
+
+		cy.nodes().unselect();
+
+		var rootNodes = cy.elements().roots();
+
+		for(var i = 0; i < rootNodes.length; i++){
+
+			var visitedArr = [];
+			var nodeCount = 0;
+			cy.elements().bfs({
+				roots: rootNodes[i],
+				visit: function(i, depth, v, e, u){
+					visitedArr.push(v);
+					visitedArr.push(e);
+					nodeCount++;
+				},
+				directed: false
+			});
+
+			console.log(i, rootNodes[i].data('name'), visitedArr.length, nodeCount);
+			if(nodeCount > nodeCriteria){
+				cy.collection(visitedArr).select();
+			}
+		}
+	});
+	var actionSelectLargestSubGraph = document.getElementById('selectLargestSubGraph');
+	actionSelectLargestSubGraph.addEventListener('click', function(){
+
+	});
+	var actionSelectHubProtein = document.getElementById('selectHubProtein');
+	actionSelectHubProtein.addEventListener('click', function(){
+
+	});
+	var actionSelectLargestHubProtein = document.getElementById('selectLargestHubProtein');
+	actionSelectLargestHubProtein.addEventListener('click', function(){
+
 	});
 });
 
