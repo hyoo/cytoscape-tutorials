@@ -61,13 +61,35 @@ document.addEventListener('DOMContentLoaded', function(){
 			},
 			hasTrailingDivider: true
 		}, {
-			id: 'selectN',
+			id: 'selectNeighborhood',
 			title: 'select Neighborhood',
-			selector: 'node'
+			selector: 'node',
+			onClickFunction: function(evt){
+				cy.nodes().unselect();
+
+				var rootNode = evt.cyTarget;
+				rootNode.neighborhood().select();
+			}
 		}, {
-			id: 'selectS',
+			id: 'selectSubgraph',
 			title: 'select Connected Sub-graph',
-			selector: 'node'
+			selector: 'node',
+			onClickFunction: function(evt){
+				cy.nodes().unselect();
+
+				var rootNode = evt.cyTarget;
+				var visitedArr = [rootNode];
+				cy.elements().bfs({
+					roots: rootNode,
+					visit: function(i, depth, v, e, u){
+						visitedArr.push(v); // include node
+						visitedArr.push(e); // include edge
+					},
+					directed: false
+				});
+
+				cy.collection(visitedArr).select();
+			}
 		}]
 	});
 
@@ -156,7 +178,8 @@ function addToGraph(data){
 					id: d['interaction_id'],
 					source: i_a,
 					target: i_b,
-					name: d['type_name'] + ' (' + d['method_name'] + ')'
+					type_name: d['type_name'],
+					method_name: d['method_name']
 				}
 			})
 		});
