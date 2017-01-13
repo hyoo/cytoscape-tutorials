@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
 	var submitButton = document.getElementById('submitButton');
 	submitButton.addEventListener('click', function(){
-		taxonID = document.getElementById('taxonID').value || 246196; // 196627, 246196
+		taxonID = document.getElementById('taxonID').value || 246196; // 196627, 246196, 1773
 
 		getData(taxonID)
 			.then(function(d){
@@ -142,8 +142,9 @@ document.addEventListener('DOMContentLoaded', function(){
 
 		cy.nodes().unselect();
 
-		var rootNodes = cy.elements().roots();
+		var rootNodes = getUniqueRootNodes();
 
+		console.time("selectSubGraph");
 		for(var i = 0; i < rootNodes.length; i++){
 
 			var visitedArr = [];
@@ -152,17 +153,21 @@ document.addEventListener('DOMContentLoaded', function(){
 				roots: rootNodes[i],
 				visit: function(i, depth, v, e, u){
 					visitedArr.push(v);
-					visitedArr.push(e);
+					// visitedArr.push(e);
+					v.connectedEdges().forEach(function(e){
+						visitedArr.push(e);
+					});
 					nodeCount++;
 				},
 				directed: false
 			});
 
-			console.log(i, rootNodes[i].data('name'), visitedArr.length, nodeCount);
+			// console.log(i, rootNodes[i].data('name'), visitedArr.length, nodeCount);
 			if(nodeCount > nodeCriteria){
 				cy.collection(visitedArr).select();
 			}
 		}
+		console.timeEnd("selectSubGraph");
 	});
 	var actionSelectLargestSubGraph = document.getElementById('selectLargestSubGraph');
 	actionSelectLargestSubGraph.addEventListener('click', function(){
@@ -171,6 +176,21 @@ document.addEventListener('DOMContentLoaded', function(){
 	var actionSelectHubProtein = document.getElementById('selectHubProtein');
 	actionSelectHubProtein.addEventListener('click', function(){
 
+		var nodeCriteria = 5;
+
+		cy.nodes().unselect();
+
+		var selectedHub = [];
+
+		cy.nodes().forEach(function(node){
+
+			console.log(node.data('name'), node.connectedEdges().length);
+			if(node.connectedEdges().length > 5){
+				selectedHub.push(node);
+			}
+		});
+
+		cy.collection(selectedHub).select();
 	});
 	var actionSelectLargestHubProtein = document.getElementById('selectLargestHubProtein');
 	actionSelectLargestHubProtein.addEventListener('click', function(){
@@ -237,4 +257,54 @@ function createInteractorCyEle(d, ab){
 		},
 		selectable: true
 	}
+}
+
+function getUniqueRootNodes(){
+	var candidateNodes = cy.nodes().leaves();
+	var rootNodes = [];
+
+	console.time("getUniqueRootNodes");
+	for(var ti = 0; ti < candidateNodes.length; ti++){
+		var candidate = candidateNodes[ti];
+		// console.log("Candidate: ", candidate.data('name'));
+
+		var graph = cy.elements().dijkstra({
+			root: candidate,
+			directed: false
+		});
+
+		var check = cy.collection(rootNodes).every(function(ele, i){
+			// console.log(i, "distance to ", ele.data('name'), ": ", graph.distanceTo(ele));
+			return graph.distanceTo(ele) == Infinity;
+		});
+
+		if(check){
+			rootNodes.push(candidate);
+			// console.log("added to rootNodes: ", rootNodes.length);
+		}
+	}
+	console.timeEnd("getUniqueRootNodes");
+
+	return rootNodes;
+}
+
+function getUniqueRootNodes2(){
+	var candidateNodes = cy.nodes().roots();
+	var rootNodes = cy.nodes().roots();
+
+	console.time("getUniqueRootNodes");
+	var allElements = cy.elements();
+	for(var i = 0; i < candidateNodes.length; i++){
+		for(var j = i + 1; j < candidateNodes.length; j++){
+			var found = allElements.aStar({root: candidateNodes[i], goal: candidateNodes[j]}).found;
+			console.log(i, j, found);
+			if(found){
+				rootNodes = rootNodes.difference(candidateNodes[i]);
+				break;
+			}
+		}
+	}
+	console.timeEnd("getUniqueRootNodes");
+
+	return rootNodes;
 }
