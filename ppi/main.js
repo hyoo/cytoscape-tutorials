@@ -102,11 +102,11 @@ document.addEventListener('DOMContentLoaded', function(){
 		getData(taxonID)
 			.then(function(d){
 				raw_data = d;
-				console.log(d);
+				// console.log(d);
 				addToGraph(d.data);
 
 				// cy.layout({name: 'cose-bilkent'});
-				cy.layout({name: 'cola'});
+				cy.layout({name: 'cola', userConstIter: 1});
 			})
 	});
 
