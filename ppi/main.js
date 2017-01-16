@@ -175,26 +175,18 @@ document.addEventListener('DOMContentLoaded', function(){
 	});
 	var actionSelectHubProtein = document.getElementById('selectHubProtein');
 	actionSelectHubProtein.addEventListener('click', function(){
-
-		var nodeCriteria = 5;
-
 		cy.nodes().unselect();
 
-		var selectedHub = [];
+		var selectedHubs = getHubs(3);
 
-		cy.nodes().forEach(function(node){
-
-			console.log(node.data('name'), node.connectedEdges().length);
-			if(node.connectedEdges().length > 5){
-				selectedHub.push(node);
-			}
-		});
-
-		cy.collection(selectedHub).select();
+		cy.collection(selectedHubs).select();
 	});
 	var actionSelectLargestHubProtein = document.getElementById('selectLargestHubProtein');
 	actionSelectLargestHubProtein.addEventListener('click', function(){
+		cy.nodes().unselect();
 
+		var selectedHub = getHubs('max');
+		cy.collection(selectedHub).select();
 	});
 });
 
@@ -307,4 +299,57 @@ function getUniqueRootNodes2(){
 	console.timeEnd("getUniqueRootNodes");
 
 	return rootNodes;
+}
+
+function getHubs(minSize){
+	var boolGetLargestMode = false;
+	var largestNodes = {}; // key: node id, value: count
+	var selectedHubs = []; // nodes
+
+	if(typeof(minSize) == 'undefined' || minSize == 'max'){
+		boolGetLargestMode = true;
+		minSize = 0;
+	}
+
+	cy.nodes().forEach(function(node){
+
+		// console.log(node.data('name'), node.connectedEdges().length);
+		if(node.connectedEdges().length >= minSize){
+			var connectedNodes = {};
+			node.connectedEdges().forEach(function(edge){
+				if(node.same(edge.source())){
+					if(!connectedNodes.hasOwnProperty(edge.target().data('id'))){
+						connectedNodes[edge.target().data('id')] = true;
+					}
+				}else if(node.same(edge.target())){
+					if(!connectedNodes.hasOwnProperty(edge.source().data('id'))){
+						connectedNodes[edge.source().data('id')] = true;
+					}
+				}
+			});
+			// console.log(connectedNodes);
+			var nodeCount = Object.keys(connectedNodes).length;
+
+			if(nodeCount >= minSize){
+				selectedHubs.push(node);
+
+				if(boolGetLargestMode){
+					largestNodes[node.data('id')] = nodeCount;
+					minSize = nodeCount; // to reduce the size of largestNodes collection
+				}
+			}
+		}
+	});
+
+	if(boolGetLargestMode){
+		// console.log(largestNodes);
+		selectedHubs = Object.keys(largestNodes).filter(function(key){
+			return (largestNodes[key] >= minSize);
+		}).map(function(key){
+			return cy.getElementById(key);
+		});
+		// console.log(selectedHubs);
+	}
+
+	return selectedHubs;
 }
