@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function(){
 				style: {
 					'border-color': '#BBBB55',
 					'shadow-color': '#FFFF33',
-					'shadow-blur': 12,
+					'shadow-blur': 30,
 					'shadow-opacity': 1
 				}
 			}, {
