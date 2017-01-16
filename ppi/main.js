@@ -138,54 +138,33 @@ document.addEventListener('DOMContentLoaded', function(){
 
 	var actionSelectSubGraph = document.getElementById('selectSubGraph');
 	actionSelectSubGraph.addEventListener('click', function(){
-		var nodeCriteria = 5;
+		cy.elements().unselect();
 
-		cy.nodes().unselect();
-
-		var rootNodes = getUniqueRootNodes();
-
-		console.time("selectSubGraph");
-		for(var i = 0; i < rootNodes.length; i++){
-
-			var visitedArr = [];
-			var nodeCount = 0;
-			cy.elements().bfs({
-				roots: rootNodes[i],
-				visit: function(i, depth, v, e, u){
-					visitedArr.push(v);
-					// visitedArr.push(e);
-					v.connectedEdges().forEach(function(e){
-						visitedArr.push(e);
-					});
-					nodeCount++;
-				},
-				directed: false
-			});
-
-			// console.log(i, rootNodes[i].data('name'), visitedArr.length, nodeCount);
-			if(nodeCount > nodeCriteria){
-				cy.collection(visitedArr).select();
-			}
-		}
-		console.timeEnd("selectSubGraph");
+		var selectedEles = getSubGraphs(5);
+		console.log("selected: ", selectedEles.length);
+		cy.collection(selectedEles).select();
 	});
 	var actionSelectLargestSubGraph = document.getElementById('selectLargestSubGraph');
 	actionSelectLargestSubGraph.addEventListener('click', function(){
-
+		cy.elements().unselect();
+		var selectedEles = getSubGraphs('max');
+		console.log("selected: ", selectedEles.length);
+		cy.collection(selectedEles).select();
 	});
 	var actionSelectHubProtein = document.getElementById('selectHubProtein');
 	actionSelectHubProtein.addEventListener('click', function(){
-		cy.nodes().unselect();
+		cy.elements().unselect();
 
 		var selectedHubs = getHubs(3);
-
+		console.log("selected: ", selectedHubs.length);
 		cy.collection(selectedHubs).select();
 	});
 	var actionSelectLargestHubProtein = document.getElementById('selectLargestHubProtein');
 	actionSelectLargestHubProtein.addEventListener('click', function(){
-		cy.nodes().unselect();
+		cy.elements().unselect();
 
 		var selectedHub = getHubs('max');
+		console.log("selected: ", selectedHub.length);
 		cy.collection(selectedHub).select();
 	});
 });
@@ -301,18 +280,71 @@ function getUniqueRootNodes2(){
 	return rootNodes;
 }
 
-function getHubs(minSize){
+function getSubGraphs(minSize){
 	var boolGetLargestMode = false;
-	var largestNodes = {}; // key: node id, value: count
-	var selectedHubs = []; // nodes
+	var selectedEles = {};
+	var rootNodes = getUniqueRootNodes();
 
 	if(typeof(minSize) == 'undefined' || minSize == 'max'){
 		boolGetLargestMode = true;
 		minSize = 0;
 	}
 
-	cy.nodes().forEach(function(node){
+	console.time("selectSubGraphs");
+	rootNodes.forEach(function(node){
+		var visitedArr = [];
+		var nodeCount = 0;
+		cy.elements().bfs({
+			roots: node,
+			visit: function(i, depth, v, e, u){
+				visitedArr.push(v);
+				v.connectedEdges().forEach(function(e){
+					visitedArr.push(e);
+				});
+				nodeCount++;
+			},
+			directed: false
+		});
 
+		// console.log(i, rootNodes[i].data('name'), visitedArr.length, nodeCount);
+		if(nodeCount > minSize){
+			selectedEles[node.data('id')] = {count: nodeCount, subElements: visitedArr};
+
+			if(boolGetLargestMode){
+				minSize = nodeCount;
+			}
+		}
+	});
+	console.timeEnd("selectSubGraphs");
+
+	if(boolGetLargestMode){
+		return Object.keys(selectedEles).filter(function(key){
+			return selectedEles[key].count >= minSize
+		}).map(function(key){
+			return selectedEles[key].subElements;
+		}).reduce(function(a, b){
+			return a.concat(b);
+		});
+	}else{
+		return Object.keys(selectedEles).map(function(key){
+			return selectedEles[key].subElements
+		}).reduce(function(a, b){
+			return a.concat(b);
+		})
+	}
+}
+
+function getHubs(minSize){
+	var boolGetLargestMode = false;
+	var selectedEles = {};
+
+	if(typeof(minSize) == 'undefined' || minSize == 'max'){
+		boolGetLargestMode = true;
+		minSize = 0;
+	}
+
+	console.time("selectHubs");
+	cy.nodes().forEach(function(node){
 		// console.log(node.data('name'), node.connectedEdges().length);
 		if(node.connectedEdges().length >= minSize){
 			var connectedNodes = {};
@@ -331,25 +363,26 @@ function getHubs(minSize){
 			var nodeCount = Object.keys(connectedNodes).length;
 
 			if(nodeCount >= minSize){
-				selectedHubs.push(node);
+				// selectedHubs.push(node);
+				selectedEles[node.data('id')] = nodeCount;
 
 				if(boolGetLargestMode){
-					largestNodes[node.data('id')] = nodeCount;
 					minSize = nodeCount; // to reduce the size of largestNodes collection
 				}
 			}
 		}
 	});
+	console.timeEnd("selectHubs");
 
 	if(boolGetLargestMode){
-		// console.log(largestNodes);
-		selectedHubs = Object.keys(largestNodes).filter(function(key){
-			return (largestNodes[key] >= minSize);
+		return Object.keys(selectedEles).filter(function(key){
+			return (selectedEles[key] >= minSize);
 		}).map(function(key){
 			return cy.getElementById(key);
 		});
-		// console.log(selectedHubs);
+	}else{
+		return Object.keys(selectedEles).map(function(key){
+			return cy.getElementById(key);
+		})
 	}
-
-	return selectedHubs;
 }
